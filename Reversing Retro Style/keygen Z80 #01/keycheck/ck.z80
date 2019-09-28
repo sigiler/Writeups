@@ -1,0 +1,374 @@
+
+register_key:
+    push    hl
+    cp      10
+    jr      nz, printKeyWrongLength
+    ld      de, key
+    ld      hl, (word_key_ptr)
+    ld      bc, 11
+    ldir
+    call    getUniqueMachineId
+    set     0, (iy+flag_o1)
+    call    checkKeyProper
+    jr      nc, printKeyIncorrect
+    pop     hl
+    ret
+
+
+checkKeyProper:
+    call    permuteBytes
+    ld      hl, temp4
+    ld      de, temp3
+    ld      bc, 5
+    ldir
+    ld      hl, keyP
+    ld      bc, 3
+    ldir
+    ld      hl, temp3
+    ld      b, 64
+    ld      de, table_permutation_1
+    call    permute_buffer_bits
+    call    checksum33
+    ld      hl, temp1
+    ld      b, 24
+    ld      de, table_permutation_2
+    call    permute_buffer_bits
+    ld      hl, temp1+2
+    set     0, (hl)
+    call    decimal_to_int
+    ld      hl, temp1+3
+    ld      b, 24
+    ld      de, table_permutation_3
+    call    permute_buffer_bits
+    ld      hl, temp1+3
+    ld      de, temp1
+    ld      b, 0
+    call    add_ihl_ide_b_i
+    call    add_ihl_ide_b_i
+    call    add_ihl_ide_b_i
+    ld      a, b
+    cp      156
+    jp      nz, check_key_fail
+    ld      hl, temp1
+    ld      b, 24
+    ld      de, table_permutation_4
+    call    permute_buffer_bits
+    ld      hl, temp1
+    ld      de, temp1_cpy
+    ldi
+    ldi
+    ldi
+    ld      a, (temp1_cpy)
+    ld      hl, temp1_cpy+1
+    add     a, (hl)
+    inc     hl
+    add     a, (hl)
+    cp      6
+    jp      nz, check_key_fail
+    push    hl
+    set     3, (flag_o2)
+    bit     0, (iy+flag_o1)            ; check if flag first time registering
+    jr      z, check_key_success
+    ld      hl, (word_key_ptr)         ; if not print something
+    ld      a, 0Dh
+    ld      bc, 10Ch
+    call    som_XXXX                   ; something
+    ld      hl, str_XXXX               ; some string
+    call    prt_XXXX                   ; print
+check_key_success:
+    pop     bc
+    scf                                ; success return carry set
+    ret
+check_key_fail:
+    or      a                          ; success return carry reset
+    ret
+
+
+permuteBytes:
+    ld      hl, key
+    ld      de,  keyP+9
+    ldi
+    ld      de,  keyP+4
+    ldi
+    dec     de
+    dec     de
+    ldi
+    dec     de
+    dec     de
+    dec     de
+    dec     de
+    ldi
+    ldi
+    inc     hl
+    inc     hl
+    ldi
+    dec     hl
+    dec     hl
+    dec     hl
+    ld      de,  keyP+8
+    ldi
+    dec     de
+    dec     de
+    ldi
+    dec     de
+    inc     hl
+    dec     de
+    dec     de
+    ldi
+    ldi
+    ret
+
+permute_buffer_bits:
+    push    bc
+    push    hl
+    srl     b
+    srl     b
+    srl     b
+    ld      a, b
+    ld      hl, temp2
+clear_permute_buffer:
+    ld      (hl), 0
+    inc     hl
+    djnz    clear_permute_buffer
+    pop     hl
+    pop     bc
+    ld      c, a
+    push    bc
+    push    hl
+    call    actual_permute_bits
+    pop     hl
+    pop     bc
+    ld      b, 0
+    ex      de, hl
+    ld      hl, temp2
+    ldir
+    ret
+
+decimal_to_int:
+    ld      de,  keyP+3
+    ld      b, 7
+    xor     a
+    ld      hl, 0
+decimal_to_int_lloop:
+    push    de
+    add     hl, hl
+    rla
+    ld      c, a
+    ld      d, h
+    ld      e, l
+    add     hl, hl
+    rla
+    add     hl, hl
+    rla
+    add     hl, de
+    adc     a, c
+    pop     de
+    ld      c, a
+    ld      a, (de)
+    inc     de
+    sub     30h ; '0'
+    call    add_hl_a
+    ld      a, c
+    adc     a, 0
+    djnz    decimal_to_int_lloop
+    ld      (temp1_3), a
+    ld      a, h
+    ld      (temp1_4), a
+    ld      a, l
+    ld      (temp1_5), a
+    ret
+
+
+checksum33:
+    xor     a
+    ld      hl, 1505h
+    ld      de, temp3
+    ld      b, 8
+checksum33_loop:
+    push    de
+    ld      c, a
+    ld      d, h
+    ld      e, l
+    push    bc
+    ld      b, 5
+checksum33_loop_inner:
+    add     hl, hl
+    rla
+    djnz    checksum33_loop_inne
+    pop     bc
+    add     hl, de
+    adc     a, c
+    pop     de
+    ld      c, a
+    ld      a, (de)
+    call    add_hl_a
+    ld      a, c
+    adc     a, 0
+    inc     de
+    djnz    checksum33_loop
+    ld      (temp1), a
+    ld      (temp1_1), hl
+    ret
+
+
+add_ihl_ide_b_i:
+    ld      a, (de)
+    add     a, (hl)
+    ld      (de), a
+    add     a, b
+    ld      b, a
+    inc     de
+    inc     hl
+    ret
+
+actual_permute_bits_loop:
+    inc     de
+    dec     b
+    ret     z
+    ld      a, b
+    and     7
+    jr      nz, actual_permute_bits
+    inc     hl
+actual_permute_bits:
+    rl      (hl)
+    jr      nc, actual_permute_bits_loop
+    push    hl
+    ld      hl, lut_bit_shift
+    ld      a, (de)
+    and     7
+    call    add_hl_a
+    ld      c, (hl)
+    ld      hl, temp2
+    ld      a, (de)
+    srl     a
+    srl     a
+    srl     a
+    call    add_hl_a
+    ld      a, (hl)
+    or      c
+    ld      (hl), a
+    pop     hl
+    jr      actual_permute_bits_loop
+
+lut_bit_shift:
+    db  80h
+    db  40h
+    db  20h
+    db  10h
+    db    8
+    db    4
+    db    2
+    db    1
+
+add_hl_a:
+    push    bc
+    ld      b, 0
+    ld      c, a
+    add     hl, bc
+    pop     bc
+    ret
+
+
+createUsername:
+    push    bc
+    call    getUniqueId
+    call    checksumId
+
+    ld      de, key
+    ld      hl, temp3
+    ld      b, 6
+    ld      c, 0
+    ld      a, 22h ; '"'
+    ld      (de), a
+    inc     de
+    jr      cu_skip
+cu_loop:
+    bit     0, b
+    jr      nz, cu_skip
+    ld      a, 2Dh ; '-'
+    ld      (de), a
+    inc     de
+cu_skip:
+    ld      a, (hl)
+    and     0Fh
+    call    convertNibble2Hex
+    ld      a, (hl)
+    srl     a
+    srl     a
+    srl     a
+    srl     a
+    call    convertNibble2Hex
+    dec     hl
+    djnz    cu_loop
+    ld      a, 22h ; '"'
+    ld      (de), a
+    inc     de
+    xor     a
+    ld      (de), a
+    pop     bc
+    ret
+
+
+convertNibble2Hex:
+    xor     c
+    ld      c, a
+    sla     c
+    bit     4, c
+    jr      z, cn2h_skip
+    set     0, c
+    res     4, c
+cn2h_skip:
+    push    bc
+    ld      bc, abcdefghjk
+    call    add_bc_a
+    ld      a, (bc)
+    ld      (de), a
+    inc     de
+    pop     bc
+    ret
+abcdefghjk: .ascii 'abcdefghijklmnop' ; modfied
+
+
+add_bc_a:
+    add     a, c
+    ld      c, a
+    ret     nc
+    inc     b
+    ret
+
+
+checksumId:
+    ld      hl, temp4
+    ld      b, 5
+    xor     a
+checksumId_loop:
+    sla     a
+    add     a, (hl)
+    inc     hl
+    djnz    checksumId_loop
+    ld      (hl), a
+    ret
+
+
+; LUTs for permutations
+table_permutation_1:
+    db 0,...
+table_permutation_2:
+    db 0,...
+table_permutation_3:
+    db 0,...
+table_permutation_3:
+    db 0,...
+
+; temp_ram
+temp1:
+    db 0,...
+temp2:
+    db 0,...
+temp3:
+    db 0,...
+temp4:
+    db 0,...
+
+temp1_cpy:
+    db 0,...
