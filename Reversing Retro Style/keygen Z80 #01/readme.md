@@ -1,11 +1,8 @@
-
 # keygenme Z80 #01
-
 
 ## Introduction
 
 I was curious to know how some old forgotten software hand coded in z80 checked the keys. The following reverse engineering is for academic purposes only so some bytes are obscured to leave the scheme protected. Previous knowledge of z80 is assumed.
-
 
 ## Key check routine
 
@@ -386,18 +383,15 @@ each byte indicates that the n-th bit goes position table[n] in bits
 
 The remaining dissassembly relevant to key check deals with creating a username string that contains the machine id in a hexadecimal like code slightly obfuscated with xor operation (note that this operation is reversible). See createUsername for reference. This username string was used to send to developer for him to generate a valid key for a that computer hardware ID.
 
-
 ## Key generator
 
 So this looks simple enough that brute force should do it. So I implementated in C, following precisely the note above. It found several keys passing the check under a second! I tested and worked. Neat.
 
 The C source code is found in the *keygen* folder. Beware bugs, it was made for working once. Decoding the username into the machine id is left unimplemented. Making a valid key from working backwards on the conditions could be interesting.
 
-
 ## Conclusion
 
 The scheme consists of adding, bit shuffling, oring, xoring around and check for certain equalities. Username string is hex digits in disguise and key is a decimal number with 10 digits. No obfuscation tricks or brute forcing resistance found but what did I expect from an old z80 software.
-
 
 ## Afterword
 
