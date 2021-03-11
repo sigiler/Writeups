@@ -70,11 +70,6 @@ def modinv(a, m):
         return x % m
 
 
-
-
-
-
-
 def print_good_opcode(s):
 	if  False or \
 		"(bad)" in s or \
@@ -218,11 +213,11 @@ def craft_payload():
 	print binascii.hexlify(compiled)
 	print str(len(compiled)/2)
 
+
 def main():
 	#print ",".join([hex(p) for p in prime_bytes])
 	#print_opcodes()
 	craft_payload()
 
-	
-main()
 
+main()
