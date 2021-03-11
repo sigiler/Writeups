@@ -1,0 +1,6 @@
+
+# visual studio code
+.vscode
+
+# IDA
+*.i64
